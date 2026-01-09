@@ -1,0 +1,1022 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>具身學習｜第五章 三角函數（視覺強化版）</title>
+  <style>
+    :root {
+      /* 色彩系統 */
+      --bg-deep: #0f172a;
+      --bg-gradient: radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.15), transparent 25%),
+                     radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.15), transparent 25%);
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --card-border: rgba(255, 255, 255, 0.1);
+      --glass: blur(20px);
+      
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      
+      --primary: #38bdf8;   /* 亮藍 (Cos) */
+      --danger: #f87171;    /* 亮紅 (Sin) */
+      --success: #4ade80;   /* 綠色 */
+      --accent: #c084fc;    /* 紫色 */
+      
+      /* 尺寸與間距 */
+      --radius: 24px;
+      --font-base: 18px; /* 加大基底字體 */
+      
+      --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: "JetBrains Mono", Consolas, Monaco, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      background-color: var(--bg-deep);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed; /* 背景固定，讓滾動更平滑 */
+      color: var(--text-main);
+      font-size: var(--font-base);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 頂部導航 - 玻璃擬態 */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 1rem 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+
+    .wrap {
+      max-width: 1400px; /* 加寬版面 */
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #fff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sub-text {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* 標籤樣式優化 */
+    .pill-group {
+      display: flex;
+      gap: 10px;
+    }
+    .pill {
+      font-size: 0.85rem;
+      padding: 6px 14px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* 主佈局 */
+    main { padding: 30px 0 60px; }
+    
+    .grid-layout {
+      display: grid;
+      grid-template-columns: 480px 1fr; /* 左側固定寬度，右側自適應 */
+      gap: 24px;
+      align-items: start;
+    }
+    
+    @media (max-width: 1024px) {
+      .grid-layout { grid-template-columns: 1fr; }
+    }
+
+    /* 卡片容器設計 */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      backdrop-filter: var(--glass);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      overflow: hidden;
+      transition: transform 0.2s ease;
+    }
+
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--card-border);
+      background: rgba(255,255,255,0.02);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--primary);
+    }
+
+    .card-body { padding: 24px; }
+
+    /* Canvas 區域 */
+    canvas {
+      width: 100%;
+      height: auto;
+      background: rgba(0,0,0,0.3);
+      border-radius: 20px;
+      border: 2px solid rgba(255,255,255,0.05);
+      cursor: grab;
+      touch-action: none;
+    }
+    canvas:active { cursor: grabbing; }
+
+    /* 控制面板優化 */
+    .control-panel {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .slider-group {
+      background: rgba(0,0,0,0.2);
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .slider-val {
+      font-family: var(--font-mono);
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    input[type=range] {
+      width: 100%;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 3px;
+      appearance: none;
+      outline: none;
+      margin: 10px 0;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--text-main);
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+
+    /* 數據儀表板 (KPI) */
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .stat-box {
+      background: rgba(255,255,255,0.03);
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+    }
+    .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 4px; }
+    .stat-value { font-family: var(--font-mono); font-size: 1.1rem; color: var(--text-main); }
+    
+    .text-red { color: var(--danger); }
+    .text-blue { color: var(--primary); }
+
+    /* 按鈕樣式 */
+    .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    button {
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: rgba(255,255,255,0.05);
+      color: var(--text-main);
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+    button.primary {
+      background: rgba(56, 189, 248, 0.2);
+      border-color: rgba(56, 189, 248, 0.4);
+      color: #7dd3fc;
+    }
+    button.danger {
+      background: rgba(248, 113, 113, 0.1);
+      border-color: rgba(248, 113, 113, 0.3);
+      color: #fca5a5;
+    }
+
+    /* 右側教學內容 */
+    .tab-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      border-radius: 99px;
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 1rem;
+    }
+    .tab-btn.active {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(255,255,255,0.2);
+      color: var(--text-main);
+      font-weight: bold;
+    }
+
+    .content-section { display: none; animation: fadeIn 0.4s ease; }
+    .content-section.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .section-title {
+      font-size: 1.4rem;
+      color: var(--accent);
+      margin: 0 0 16px 0;
+      border-bottom: 2px solid rgba(255,255,255,0.05);
+      padding-bottom: 8px;
+    }
+
+    .highlight-box {
+      background: rgba(139, 92, 246, 0.1);
+      border-left: 4px solid var(--accent);
+      padding: 16px;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 20px;
+      font-size: 1rem;
+    }
+
+    /* 問題互動區 */
+    .qa-box {
+      background: rgba(0,0,0,0.2);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 16px 0;
+    }
+    .qa-q { font-weight: bold; margin-bottom: 12px; font-size: 1.05rem; }
+    .input-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    
+    input[type="text"] {
+      flex: 1;
+      min-width: 150px;
+      padding: 12px;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--card-border);
+      background: rgba(0,0,0,0.3);
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+    input[type="text"]:focus { outline: 2px solid var(--primary); border-color: transparent; }
+
+    .feedback { margin-top: 10px; font-size: 0.95rem; font-weight: 500; }
+    .feedback .ok { color: var(--success); }
+    .feedback .no { color: var(--danger); }
+
+    /* 拖曳題樣式 */
+    .chip-container {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; padding: 10px; background: rgba(0,0,0,0.1); border-radius: 12px;
+    }
+    .chip {
+      background: rgba(255,255,255,0.1);
+      border: 1px dashed rgba(255,255,255,0.3);
+      padding: 10px 16px;
+      border-radius: 99px;
+      cursor: grab;
+      user-select: none;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+    }
+    .chip:active { cursor: grabbing; background: var(--primary); color: #000; border-style: solid; }
+
+    .drop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 768px) { .drop-grid { grid-template-columns: 1fr; } }
+
+    .drop-zone {
+      background: rgba(0,0,0,0.25);
+      border: 2px dashed var(--card-border);
+      border-radius: 16px;
+      padding: 16px;
+      min-height: 100px;
+      transition: border-color 0.2s;
+    }
+    .drop-zone h4 { margin: 0 0 10px 0; font-size: 0.9rem; color: var(--text-muted); }
+    
+    /* 進度條 */
+    .score-container {
+      margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--card-border);
+    }
+    .progress-track {
+      height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden; margin-top: 8px;
+    }
+    .progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, var(--success), var(--primary));
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="wrap top-bar">
+    <div>
+      <h1>具身學習｜第五章 三角函數</h1>
+      <div class="sub-text">透過「拖曳、旋轉、觀察」，用身體感覺建立數學直覺</div>
+    </div>
+    <div class="pill-group">
+      <div class="pill">互動演示</div>
+      <div class="pill">即時回饋</div>
+      <div class="pill">具身認知</div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="wrap grid-layout">
+
+    <section class="card">
+      <div class="card-header">
+        <h2>互動單位圓</h2>
+        <span style="font-size:0.9rem; color:var(--text-muted)">請拖曳紅點或使用滑桿</span>
+      </div>
+      <div class="card-body">
+        <canvas id="circle" width="800" height="800" aria-label="unit circle"></canvas>
+
+        <div class="control-panel">
+          
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>角度 θ (Degree)</span>
+              <span id="degLabel" class="slider-val">0°</span>
+            </div>
+            <input id="deg" type="range" min="-720" max="720" value="0" step="1" />
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>弧度 θ (Radian)</span>
+              <span id="radLabel" class="slider-val">0</span>
+            </div>
+            <input id="rad" type="range" min="-12.566" max="12.566" value="0" step="0.01" />
+          </div>
+
+          <div class="dashboard">
+            <div class="stat-box">
+              <div class="stat-label">座標 (Cos, Sin)</div>
+              <div class="stat-value" id="xy">(1.00, 0.00)</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Tan θ</div>
+              <div class="stat-value" id="tan">0.00</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">象限位置</div>
+              <div class="stat-value" style="font-size:0.95rem" id="quad">軸上</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">走過的弧長 (r=1)</div>
+              <div class="stat-value" id="arc">0.00</div>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="primary" id="snap">🧲 開啟吸附</button>
+            <button id="reset">🔄 重置</button>
+            <button id="random">🎲 隨機角度</button>
+            <button class="danger" id="clearScore">🗑️ 清除紀錄</button>
+          </div>
+
+          <div class="score-container">
+            <div style="display:flex; justify-content:space-between; font-size:0.9rem;">
+              <span>練習進度</span>
+              <span>得分: <b id="score" style="color:var(--success)">0</b> / <span id="total">0</span></span>
+            </div>
+            <div class="progress-track"><div id="bar" class="progress-fill"></div></div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <div class="tab-nav">
+          <button class="tab-btn active" data-tab="t1">1. 任意角與弧度</button>
+          <button class="tab-btn" data-tab="t2">2. 概念與關係</button>
+          <button class="tab-btn" data-tab="t3">3. 誘導公式</button>
+          <button class="tab-btn" data-tab="t4">4. 綜合挑戰</button>
+        </div>
+      </div>
+
+      <div class="card-body">
+
+        <div class="content-section active" id="t1">
+          <h3 class="section-title">5.1 任意角與弧度制</h3>
+          <div class="highlight-box">
+            <b>具身指引：</b>
+            把「角」想像成身體旋轉的動作。
+            <ul>
+              <li><b>逆時針</b>旋轉為正角，<b>順時針</b>旋轉為負角。</li>
+              <li><b>弧度</b>就是你在單位圓上「走過的距離」。</li>
+            </ul>
+          </div>
+
+          <p style="color:var(--text-muted)">試著操作左側圓盤，觀察正負角的變化。</p>
+
+          <div class="qa-box" data-qa="rad1">
+            <div class="qa-q">例題 1：將 150° 轉換為弧度（用 π 表示）。</div>
+            <div class="input-row">
+              <input type="text" placeholder="例如：5pi/6" data-answer="5π/6|5*pi/6|5pi/6" />
+              <button class="primary" data-check>檢查</button>
+              <button data-hint>💡 提示</button>
+            </div>
+            <div class="feedback" aria-live="polite"></div>
+          </div>
+
+          <div class="qa-box" data-qa="rad2">
+            <div class="qa-q">具身練習 2：拖曳左側滑桿，使「弧長」數值約等於 3.14 (即 π)。請問此時角度約為幾度？</div>
+            <div class="input-row">
+              <input type="text" placeholder="輸入度數" data-answer="180" />
+              <button class="primary" data-check>檢查</button>
+              <button data-hint>💡 提示</button>
+            </div>
+            <div class="feedback" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="content-section" id="t2">
+          <h3 class="section-title">5.2 三角函數概念與關係</h3>
+          <div class="highlight-box">
+            <b>具身指引：</b>
+            不要死背，看左邊的圖！
+            <ul>
+              <li><span class="text-blue"><b>Cos θ</b></span> 是點的 <b>X 座標</b> (左右位置)。</li>
+              <li><span class="text-red"><b>Sin θ</b></span> 是點的 <b>Y 座標</b> (上下高度)。</li>
+              <li>永遠成立：<b>sin² + cos² = 1</b> (畢氏定理)。</li>
+            </ul>
+          </div>
+
+          <div class="qa-box" data-qa="concept1">
+            <div class="qa-q">例題 1：當角 θ 位於第二象限時，sinθ 與 cosθ 的正負號分別為何？</div>
+            <div class="input-row">
+              <input type="text" placeholder="格式：+,-" data-answer="+,-" />
+              <button class="primary" data-check>檢查</button>
+              <button data-hint>💡 提示</button>
+            </div>
+            <div class="feedback" aria-live="polite"></div>
+          </div>
+
+          <div class="qa-box" data-qa="rel2">
+            <div class="qa-q">具身練習 2：將左圖拖曳至 cosθ ≈ 0.5 的位置。觀察 sinθ (高度) 約為多少？</div>
+            <div class="input-row">
+              <input type="text" placeholder="例如：0.87" data-answer="0.87|0.86|0.88" />
+              <button class="primary" data-check>檢查</button>
+              <button data-hint>💡 提示</button>
+            </div>
+            <div class="feedback" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="content-section" id="t3">
+          <h3 class="section-title">5.3 誘導公式配對</h3>
+          <div class="highlight-box">
+            <b>具身指引：</b>
+            誘導公式其實就是圖形的「對稱」與「旋轉」。請將下方的公式卡片拖曳到正確的分類口袋中。
+          </div>
+
+          <div class="chip-container" id="chips">
+            </div>
+
+          <div class="drop-grid">
+            <div class="drop-zone" data-drop="oddEven">
+              <h4>口袋 A：負角 (奇偶性)</h4>
+              <div class="dropzone-content"></div>
+            </div>
+            <div class="drop-zone" data-drop="piShift">
+              <h4>口袋 B：π 的補角/相關角</h4>
+              <div class="dropzone-content"></div>
+            </div>
+            <div class="drop-zone" data-drop="halfPi">
+              <h4>口袋 C：π/2 的餘角 (函數互換)</h4>
+              <div class="dropzone-content"></div>
+            </div>
+            <div class="drop-zone" data-drop="twoPi">
+              <h4>口袋 D：2π 週期 (同終邊)</h4>
+              <div class="dropzone-content"></div>
+            </div>
+          </div>
+
+          <div class="btn-group" style="justify-content: flex-end; margin-top:16px;">
+            <button id="resetDrag">重置配對</button>
+            <button class="primary" id="checkDrag">✅ 檢查配對</button>
+          </div>
+          <div class="feedback" id="dragFb"></div>
+
+          <hr style="border-color:var(--card-border); margin: 30px 0;">
+
+          <div class="qa-box" data-qa="induce1">
+            <div class="qa-q">隨堂考：化簡 sin( -θ ) = ?</div>
+            <div class="input-row">
+              <input type="text" placeholder="例如：-sinθ" data-answer="-sinθ|-sin(theta)|-sin θ" />
+              <button class="primary" data-check>檢查</button>
+            </div>
+            <div class="feedback" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <div class="content-section" id="t4">
+          <h3 class="section-title">綜合挑戰</h3>
+          <p>請善用左側的互動圓形來輔助思考。</p>
+
+          <div class="qa-box" data-qa="mix1">
+            <div class="qa-q">挑戰 1：若 θ 在第四象限且 sinθ = -1/2，求 cosθ。（最簡分數）</div>
+            <div class="input-row">
+              <input type="text" placeholder="例如：sqrt(3)/2" data-answer="√3/2|root3/2|sqrt(3)/2|0.866" />
+              <button class="primary" data-check>檢查</button>
+              <button data-hint>💡 提示</button>
+            </div>
+            <div class="feedback" aria-live="polite"></div>
+          </div>
+
+          <div class="qa-box" data-qa="mix2">
+            <div class="qa-q">挑戰 2：將左側角度設為 210°，判斷 sinθ 與 cosθ 的正負號。</div>
+            <div class="input-row">
+              <input type="text" placeholder="格式：sin,cos 例如：-,+" data-answer="-,-|-, -" />
+              <button class="primary" data-check>檢查</button>
+            </div>
+            <div class="feedback" aria-live="polite"></div>
+          </div>
+
+          <div class="qa-box" data-qa="mix3">
+            <div class="qa-q">挑戰 3：化簡 sin(π/2 - θ) = ?</div>
+            <div class="input-row">
+              <input type="text" placeholder="例如：cosθ" data-answer="cosθ|cos(theta)|cos θ" />
+              <button class="primary" data-check>檢查</button>
+            </div>
+            <div class="feedback" aria-live="polite"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script>
+(function(){
+  // --- 工具函式 ---
+  const $ = (sel, el=document) => el.querySelector(sel);
+  const $$ = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+  const TAU = Math.PI * 2;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  function format(n, d=4){
+    if (!isFinite(n)) return "undef";
+    return (Math.round(n * Math.pow(10,d)) / Math.pow(10,d)).toFixed(d);
+  }
+
+  // 美化版弧度顯示
+  function prettyRad(r){
+    const common = [
+      {k:0, label:"0"}, {k:1/6,label:"π/6"}, {k:1/4,label:"π/4"}, {k:1/3,label:"π/3"},
+      {k:1/2,label:"π/2"}, {k:1, label:"π"}, {k:3/2,label:"3π/2"}, {k:2, label:"2π"}
+    ];
+    const abs = Math.abs(r);
+    for (const c of common){
+      const target = c.k * Math.PI;
+      if (Math.abs(abs - target) < 0.05){ // 寬鬆判定
+        const sign = r < 0 ? "-" : "";
+        return `${sign}${c.label} (${format(r,2)})`;
+      }
+    }
+    return format(r,3);
+  }
+
+  // --- 分數系統 ---
+  const storeKey = "trig_score_v2";
+  let scoreState = {score:0, total:0};
+  try {
+    const s = JSON.parse(localStorage.getItem(storeKey));
+    if(s) scoreState = s;
+  } catch(e){}
+  
+  function updateScoreUI(){
+    $("#score").textContent = scoreState.score;
+    $("#total").textContent = scoreState.total;
+    const pct = scoreState.total ? (scoreState.score/scoreState.total*100) : 0;
+    $("#bar").style.width = pct + "%";
+    localStorage.setItem(storeKey, JSON.stringify(scoreState));
+  }
+  updateScoreUI();
+
+  // --- Canvas 繪圖 ---
+  const canvas = $("#circle");
+  const ctx = canvas.getContext("2d");
+  
+  // 處理高解析度螢幕 (Retina)
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    // 設定實際像素大小
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    // 縮放繪圖環境
+    ctx.scale(dpr, dpr);
+    draw();
+  }
+  
+  const state = { theta: 0, snapping: false, dragging: false };
+
+  function draw(){
+    // 取得 CSS 像素尺寸
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+    const cx = w/2, cy = h/2;
+    const R = Math.min(w,h) * 0.35; // 半徑
+
+    ctx.clearRect(0,0,w,h);
+
+    // 1. 繪製格線
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.lineWidth = 1;
+    const gridSize = 40;
+    for(let x=cx; x<w; x+=gridSize) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+    for(let x=cx; x>0; x-=gridSize) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke(); }
+    for(let y=cy; y<h; y+=gridSize) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+    for(let y=cy; y>0; y-=gridSize) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke(); }
+
+    // 2. 坐標軸
+    ctx.strokeStyle = "rgba(255,255,255,0.5)";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(20, cy); ctx.lineTo(w-20, cy); ctx.stroke(); // X
+    ctx.beginPath(); ctx.moveTo(cx, 20); ctx.lineTo(cx, h-20); ctx.stroke(); // Y
+
+    // 3. 單位圓
+    ctx.strokeStyle = "rgba(255,255,255,0.2)";
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, TAU); ctx.stroke();
+
+    // 4. 計算點位置
+    const x = Math.cos(state.theta);
+    const y = Math.sin(state.theta);
+    const px = cx + x*R;
+    const py = cy - y*R; // Canvas Y 軸向下，需反轉
+
+    // 5. 投影線 (色彩對應)
+    // Cos (藍)
+    ctx.strokeStyle = "#38bdf8"; 
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, cy); ctx.stroke();
+    // 加強 X 軸上的投影線段
+    ctx.setLineDash([]);
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, cy); ctx.stroke();
+
+    // Sin (紅)
+    ctx.strokeStyle = "#f87171";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5,5]);
+    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(cx, py); ctx.stroke();
+    // 加強 Y 軸上的投影線段
+    ctx.setLineDash([]);
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, py); ctx.stroke();
+
+    // 6. 半徑與角度弧線
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py); ctx.stroke();
+
+    // 角度填充
+    const normT = state.theta % TAU;
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*0.15, 0, -state.theta, state.theta > 0); // Canvas arc 方向定義略有不同
+    ctx.strokeStyle = "#c084fc";
+    ctx.stroke();
+
+    // 7. 互動點
+    ctx.fillStyle = "#fff";
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = "rgba(255,255,255,0.8)";
+    ctx.beginPath(); ctx.arc(px, py, 12, 0, TAU); ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 8. 文字標籤
+    ctx.fillStyle = "white";
+    ctx.font = "16px monospace";
+    ctx.fillText(`P(${format(x,2)}, ${format(y,2)})`, px + 15, py - 15);
+
+    // UI 更新
+    updateUI(x, y);
+  }
+
+  function updateUI(cos, sin) {
+    $("#xy").innerHTML = `<span class="text-blue">${format(cos,2)}</span>, <span class="text-red">${format(sin,2)}</span>`;
+    
+    // Tan
+    let tan = Math.abs(cos) < 1e-9 ? "∞" : format(sin/cos, 2);
+    $("#tan").textContent = tan;
+    $("#arc").textContent = format(state.theta, 2);
+
+    // 象限
+    let q = "軸上";
+    if (cos > 1e-5 && sin > 1e-5) q = "第一象限 (+,+)";
+    if (cos < -1e-5 && sin > 1e-5) q = "第二象限 (-,+)";
+    if (cos < -1e-5 && sin < -1e-5) q = "第三象限 (-,-)";
+    if (cos > 1e-5 && sin < -1e-5) q = "第四象限 (+,-)";
+    $("#quad").textContent = q;
+
+    // 滑桿連動
+    const deg = state.theta * 180 / Math.PI;
+    $("#degLabel").textContent = Math.round(deg) + "°";
+    $("#radLabel").textContent = prettyRad(state.theta);
+    
+    // 防止滑桿與拖曳循環觸發
+    if (!state.dragging) {
+      $("#deg").value = deg;
+      $("#rad").value = state.theta;
+    }
+  }
+
+  function setAngle(rad) {
+    if (state.snapping) {
+      const deg = rad * 180 / Math.PI;
+      const snapPoints = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330, 360];
+      // 簡單吸附邏輯
+      let best = deg;
+      let minDiff = 5; // 5度內吸附
+      
+      // 處理多圈
+      const base = Math.floor(deg/360)*360;
+      const local = deg - base;
+      
+      for(let p of snapPoints) {
+        if(Math.abs(local - p) < minDiff) best = base + p;
+        if(Math.abs(local + 360 - p) < minDiff) best = base - 360 + p; // 處理邊界
+      }
+      rad = best * Math.PI / 180;
+    }
+    state.theta = rad;
+    draw();
+  }
+
+  // --- 互動事件 ---
+  function getAngleFromEvent(e) {
+    const rect = canvas.getBoundingClientRect();
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    // Y 軸翻轉
+    return Math.atan2(cy - (clientY - rect.top), (clientX - rect.left) - cx);
+  }
+
+  function handleInput(rad) {
+    // 保持圈數連續性
+    const current = state.theta;
+    const diff = rad - current;
+    // 簡單的連續性處理，實際應用可更複雜
+    // 這裡直接設值
+    setAngle(rad);
+  }
+
+  // 滑鼠/觸控拖曳
+  canvas.addEventListener("mousedown", e => { state.dragging = true; });
+  canvas.addEventListener("touchstart", e => { state.dragging = true; e.preventDefault(); }, {passive: false});
+  
+  window.addEventListener("mousemove", e => {
+    if(!state.dragging) return;
+    let ang = getAngleFromEvent(e); 
+    // 處理 atan2 的跳變 (-PI -> PI)
+    // 這裡簡化處理：直接計算最接近當前角度的同界角
+    const cur = state.theta;
+    const diff = ang - (cur % TAU);
+    let target = cur + diff;
+    if (diff > Math.PI) target -= TAU;
+    if (diff < -Math.PI) target += TAU;
+    setAngle(target);
+  });
+  
+  window.addEventListener("touchmove", e => {
+    if(!state.dragging) return;
+    let ang = getAngleFromEvent(e);
+    const cur = state.theta;
+    const diff = ang - (cur % TAU);
+    let target = cur + diff;
+    if (diff > Math.PI) target -= TAU;
+    if (diff < -Math.PI) target += TAU;
+    setAngle(target);
+  }, {passive: false});
+
+  window.addEventListener("mouseup", () => state.dragging = false);
+  window.addEventListener("touchend", () => state.dragging = false);
+
+  // 滑桿事件
+  $("#deg").addEventListener("input", e => setAngle(e.target.value * Math.PI / 180));
+  $("#rad").addEventListener("input", e => setAngle(parseFloat(e.target.value)));
+
+  // 按鈕事件
+  $("#snap").addEventListener("click", function(){
+    state.snapping = !state.snapping;
+    this.classList.toggle("primary");
+    this.textContent = state.snapping ? "🧲 吸附開啟" : "🧲 開啟吸附";
+  });
+  $("#reset").addEventListener("click", () => setAngle(0));
+  $("#random").addEventListener("click", () => setAngle((Math.random()*4-2)*Math.PI));
+  $("#clearScore").addEventListener("click", () => {
+    scoreState = {score:0, total:0};
+    updateScoreUI();
+    $$(".feedback").forEach(el => el.innerHTML="");
+  });
+
+  // 視窗大小改變時重繪
+  window.addEventListener("resize", resizeCanvas);
+  // 初始化
+  resizeCanvas();
+
+  // --- 分頁切換 ---
+  $$(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      $$(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      const id = btn.dataset.tab;
+      $$(".content-section").forEach(s => s.classList.remove("active"));
+      $("#"+id).classList.add("active");
+    });
+  });
+
+  // --- 答題系統 ---
+  function normalize(str) {
+    return (str || "").toLowerCase().replace(/\s/g, "")
+      .replace(/π/g, "pi").replace(/√/g, "sqrt");
+  }
+
+  $$("[data-check]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const parent = btn.closest(".qa-box") || btn.closest(".input-row"); // 相容不同結構
+      const input = $("input", parent.parentElement); // 向上找
+      const box = btn.closest(".qa-box");
+      const feedback = $(".feedback", box);
+      
+      scoreState.total++;
+      const val = normalize(input.value);
+      const answers = input.dataset.answer.split("|").map(normalize);
+      
+      // 數字模糊比對 (針對 rad2, rel2 等)
+      let correct = false;
+      if(answers.some(ans => ans === val)) correct = true;
+      else {
+        // 嘗試數值解析
+        const numVal = parseFloat(val);
+        const numAns = parseFloat(answers[0]);
+        if (!isNaN(numVal) && !isNaN(numAns) && Math.abs(numVal - numAns) < 0.1) correct = true;
+      }
+
+      if (correct) {
+        scoreState.score++;
+        feedback.innerHTML = `<span class="ok">✔ 正確！做得好！</span>`;
+      } else {
+        feedback.innerHTML = `<span class="no">✘ 再試試看</span>`;
+      }
+      updateScoreUI();
+    });
+  });
+
+  $$("[data-hint]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      alert("提示：請觀察左側單位圓，注意象限與符號的變化。");
+    });
+  });
+
+  // --- 拖曳配對 (Drag & Drop) ---
+  const formulas = [
+    {id:"f1", txt:"sin(-θ) = -sinθ", g:"oddEven"},
+    {id:"f2", txt:"cos(-θ) = cosθ", g:"oddEven"},
+    {id:"f3", txt:"sin(π-θ) = sinθ", g:"piShift"},
+    {id:"f4", txt:"cos(π-θ) = -cosθ", g:"piShift"},
+    {id:"f5", txt:"sin(π/2-θ) = cosθ", g:"halfPi"},
+    {id:"f6", txt:"sin(θ+2π) = sinθ", g:"twoPi"}
+  ];
+  
+  const chipContainer = $("#chips");
+  
+  function initDrag() {
+    chipContainer.innerHTML = "";
+    $$(".dropzone-content").forEach(el => el.innerHTML = ""); // 清空放置區
+    
+    formulas.forEach(f => {
+      const el = document.createElement("div");
+      el.className = "chip";
+      el.draggable = true;
+      el.textContent = f.txt;
+      el.dataset.group = f.g;
+      el.id = f.id;
+      
+      el.addEventListener("dragstart", e => {
+        e.dataTransfer.setData("text", e.target.id);
+      });
+      chipContainer.appendChild(el);
+    });
+    $("#dragFb").innerHTML = "";
+  }
+
+  $$(".drop-zone").forEach(zone => {
+    zone.addEventListener("dragover", e => {
+      e.preventDefault();
+      zone.style.background = "rgba(255,255,255,0.1)";
+    });
+    zone.addEventListener("dragleave", e => {
+      zone.style.background = "rgba(0,0,0,0.25)";
+    });
+    zone.addEventListener("drop", e => {
+      e.preventDefault();
+      zone.style.background = "rgba(0,0,0,0.25)";
+      const id = e.dataTransfer.getData("text");
+      const el = document.getElementById(id);
+      if(el) {
+        $(".dropzone-content", zone).appendChild(el);
+      }
+    });
+  });
+
+  $("#resetDrag").addEventListener("click", initDrag);
+  
+  $("#checkDrag").addEventListener("click", () => {
+    let allCorrect = true;
+    let placedCount = 0;
+    
+    $$(".drop-zone").forEach(zone => {
+      const targetGroup = zone.dataset.drop;
+      const chips = $$(".chip", zone);
+      chips.forEach(chip => {
+        placedCount++;
+        if(chip.dataset.group !== targetGroup) allCorrect = false;
+      });
+    });
+
+    const fb = $("#dragFb");
+    if(placedCount < formulas.length) {
+      fb.innerHTML = "<span class='no'>尚未完成所有配對</span>";
+    } else if(allCorrect) {
+      fb.innerHTML = "<span class='ok'>✔ 太棒了！全部分類正確！</span>";
+      scoreState.score += 5; // 加分
+      updateScoreUI();
+    } else {
+      fb.innerHTML = "<span class='no'>有錯誤喔，請再檢查一下誘導公式的定義。</span>";
+    }
+  });
+
+  initDrag(); // 啟動拖曳題
+
+})();
+</script>
+</body>
+</html>
